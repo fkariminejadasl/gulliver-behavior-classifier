@@ -16,7 +16,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7"]
+test = [
+    "black",
+    "isort",
+    "pyflakes",
+    "pytest",
+]
 
 [tool.setuptools.packages.find]
 include = ["gulliver*"]
@@ -26,3 +31,8 @@ include = ["gulliver*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.black]
+target-version = ["py314"]
+
+# for linters
+# for i in gulliver;do echo $i; black $i -l 88; isort $i --profile black; pyflakes $i;done
