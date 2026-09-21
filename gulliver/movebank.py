@@ -41,6 +41,7 @@ KEY_COLUMNS = [
     "individual-local-identifier",
     "start-timestamp",
 ]
+BURST_COLUMNS = [*KEY_COLUMNS, "timestamp"]
 BURST_LENGTH = 20
 SAMPLE_PERIOD = pd.Timedelta(milliseconds=50)
 MAX_SPEED = 30.0  # m/s. A faster GPS fix is an error, not a flying gull.
@@ -74,7 +75,7 @@ class MovebankData:
 
     acceleration: np.ndarray  # N x 20 x 3, clipped to +/- TILT_LIMIT
     ground_speed: np.ndarray  # N, metres per second
-    metadata: pd.DataFrame  # N rows: the key columns plus burst-index
+    metadata: pd.DataFrame  # N rows: the key columns, timestamp, burst-index
     report: PreprocessingReport
 
 
@@ -187,8 +188,10 @@ def load_movebank_data(
     samples = samples.reshape(-1, BURST_LENGTH, len(TILT_COLUMNS))
     counts["bursts"] = len(samples)
 
-    # One row per burst: its fix, and its place among the bursts of that fix.
-    starts = acceleration.iloc[::BURST_LENGTH][KEY_COLUMNS].reset_index(drop=True)
+    # One row per burst: its fix, when it starts, and its place among the
+    # bursts of that fix. `timestamp` is the first sample of the burst, so the
+    # bursts of one fix stay apart; only the first one equals `start-timestamp`.
+    starts = acceleration.iloc[::BURST_LENGTH][BURST_COLUMNS].reset_index(drop=True)
     starts["burst-index"] = starts.groupby(KEY_COLUMNS, sort=False).cumcount()
     bursts = starts.merge(_gps_speeds(gps), on=KEY_COLUMNS, how="left")
 
@@ -213,7 +216,7 @@ def load_movebank_data(
     return MovebankData(
         acceleration=samples,
         ground_speed=bursts["ground-speed"].to_numpy(dtype=np.float32),
-        metadata=bursts[[*KEY_COLUMNS, "burst-index"]].reset_index(drop=True),
+        metadata=bursts[[*BURST_COLUMNS, "burst-index"]].reset_index(drop=True),
         report=PreprocessingReport(
             **{
                 field.name: int(counts[field.name])

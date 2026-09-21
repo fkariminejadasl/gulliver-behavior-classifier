@@ -13,6 +13,9 @@ authors = [{name = "Fatemeh Karimi Nejadasl"}]
 dependencies = [
     "numpy>=1.23",
     "pandas>=2.0",
+    # runs the trained classifier. The CPU wheel is enough:
+    # pip install torch --index-url https://download.pytorch.org/whl/cpu
+    "torch>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -23,8 +26,15 @@ test = [
     "pytest",
 ]
 
+[project.scripts]
+gulliver-classify = "gulliver.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["gulliver*"]
+
+# the trained weights ship with the package
+[tool.setuptools.package-data]
+gulliver = ["models/*.pth"]
 
 # testing extras
 # pip install .[test]
@@ -35,4 +45,4 @@ testpaths = ["tests"]
 target-version = ["py314"]
 
 # for linters
-# for i in gulliver;do echo $i; black $i -l 88; isort $i --profile black; pyflakes $i;done
+# for i in gulliver tests;do echo $i; black $i -l 88; isort $i --profile black; pyflakes $i;done
