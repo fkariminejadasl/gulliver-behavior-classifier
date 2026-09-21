@@ -1,31 +1,41 @@
 """Read and validate Movebank GPS and acceleration exports.
 
-One model input is a burst of exactly 20 calibrated acceleration samples at
-20 Hz, matched to one GPS fix by tag, animal, and burst start timestamp.
-Incomplete, irregular, duplicated, or unmatched bursts are skipped and counted.
+One model input is a burst of 20 calibrated acceleration samples at 20 Hz,
+matched to one GPS fix by tag, animal, and burst start timestamp. A longer
+unbroken run is cut into as many bursts of 20 as it holds, so 60 clean samples
+give 3 bursts; the leftover samples are dropped. Rows and bursts that fail a
+check are skipped and counted, so a run says why data was lost. Accepted
+bursts are clipped to the range the model was trained on.
+
+The checks are the ones the model was trained behind, in bird-behavior
+`behavior/data.py::identify_and_process_groups`, `::match_gps_to_groups` and
+`scripts/data/bird_behavior_app_data.py::infer_save_app_data`.
 """
 
-from dataclasses import dataclass
+import gzip
+from collections import Counter
+from contextlib import ExitStack
+from dataclasses import dataclass, fields
 from pathlib import Path
+from typing import BinaryIO
 
 import numpy as np
 import pandas as pd
 
-GPS_COLUMNS = {
+GPS_COLUMNS = [
     "timestamp",
     "ground-speed",
     "tag-local-identifier",
     "individual-local-identifier",
-}
-ACCELERATION_COLUMNS = {
+]
+TILT_COLUMNS = ["tilt-x", "tilt-y", "tilt-z"]
+ACCELERATION_COLUMNS = [
     "timestamp",
     "start-timestamp",
-    "tilt-x",
-    "tilt-y",
-    "tilt-z",
+    *TILT_COLUMNS,
     "tag-local-identifier",
     "individual-local-identifier",
-}
+]
 KEY_COLUMNS = [
     "tag-local-identifier",
     "individual-local-identifier",
@@ -33,120 +43,181 @@ KEY_COLUMNS = [
 ]
 BURST_LENGTH = 20
 SAMPLE_PERIOD = pd.Timedelta(milliseconds=50)
+MAX_SPEED = 30.0  # m/s. A faster GPS fix is an error, not a flying gull.
+TILT_LIMIT = 2.0  # g. The range the model was trained on.
+GZIP_MAGIC = b"\x1f\x8b"
+MAX_GZIP_LAYERS = 4
 
 
 @dataclass(frozen=True)
 class PreprocessingReport:
+    """Why rows and bursts were dropped. Row counts first, then burst counts."""
+
+    acceleration_rows: int
     acceleration_groups: int
-    accepted_bursts: int
-    incomplete_bursts: int
-    duplicate_sample_bursts: int
-    irregular_sample_bursts: int
-    missing_acceleration_bursts: int
+    missing_value_rows: int
+    duplicate_time_rows: int
+    short_run_rows: int
+    partial_burst_rows: int
+    bursts: int
     missing_gps_bursts: int
-    duplicate_gps_bursts: int
+    conflicting_gps_bursts: int
     missing_speed_bursts: int
+    fast_gps_bursts: int
+    accepted_bursts: int
+    clipped_values: int
 
 
 @dataclass(frozen=True)
 class MovebankData:
     """Validated model inputs and their Movebank identifiers."""
 
-    acceleration: np.ndarray
-    ground_speed: np.ndarray
-    metadata: pd.DataFrame
+    acceleration: np.ndarray  # N x 20 x 3, clipped to +/- TILT_LIMIT
+    ground_speed: np.ndarray  # N, metres per second
+    metadata: pd.DataFrame  # N rows: the key columns plus burst-index
     report: PreprocessingReport
 
 
-def _require_columns(data: pd.DataFrame, required: set[str], source: Path) -> None:
-    missing = sorted(required.difference(data.columns))
+def _require_columns(data: pd.DataFrame, required: list[str], source: Path) -> None:
+    missing = sorted(set(required).difference(data.columns))
     if missing:
         raise ValueError(f"{source} is missing required columns: {', '.join(missing)}")
 
 
-def _read_csv(path: Path, required: set[str]) -> pd.DataFrame:
-    data = pd.read_csv(path, encoding="utf-8-sig", low_memory=False)
-    _require_columns(data, required, path)
-    return data
+def _open_csv(path: Path, stack: ExitStack) -> BinaryIO:
+    """Open a CSV and peel off any gzip layers.
+
+    Movebank downloads are sometimes gzipped twice, so the magic bytes decide
+    how often to decompress, not the file name.
+    """
+    stream: BinaryIO = stack.enter_context(path.open("rb"))
+    for _ in range(MAX_GZIP_LAYERS):
+        if stream.peek(2)[:2] != GZIP_MAGIC:
+            return stream
+        stream = stack.enter_context(gzip.GzipFile(fileobj=stream))
+    if stream.peek(2)[:2] == GZIP_MAGIC:
+        raise ValueError(f"{path} is gzipped more than {MAX_GZIP_LAYERS} times")
+    return stream
+
+
+def _read_csv(path: Path, required: list[str]) -> pd.DataFrame:
+    """Read the required columns of a CSV or gzipped CSV."""
+    with ExitStack() as stack:
+        header = pd.read_csv(
+            _open_csv(path, stack), encoding="utf-8-sig", compression=None, nrows=0
+        )
+    _require_columns(header, required, path)
+    with ExitStack() as stack:
+        return pd.read_csv(
+            _open_csv(path, stack),
+            encoding="utf-8-sig",
+            compression=None,
+            usecols=required,
+            low_memory=False,
+        )
+
+
+def _gps_speeds(gps: pd.DataFrame) -> pd.DataFrame:
+    """One row per GPS fix: its ground speed and how many rows claimed it."""
+    gps = gps.rename(columns={"timestamp": "start-timestamp"})
+    gps["start-timestamp"] = pd.to_datetime(
+        gps["start-timestamp"], utc=True, errors="coerce"
+    )
+    gps = gps[[*KEY_COLUMNS, "ground-speed"]].drop_duplicates()
+    return gps.groupby(KEY_COLUMNS, dropna=False, as_index=False).agg(
+        **{
+            "ground-speed": ("ground-speed", "first"),
+            "gps-rows": ("ground-speed", "size"),
+        }
+    )
+
+
+def _cut_into_bursts(acceleration: pd.DataFrame, counts: Counter) -> pd.DataFrame:
+    """Keep only the rows that fill a burst of consecutive samples.
+
+    Rows are sorted per fix, a run ends wherever the step is not one sample
+    period, and every run gives as many whole bursts as it holds.
+    """
+    acceleration = acceleration.sort_values([*KEY_COLUMNS, "timestamp"], kind="stable")
+
+    repeated = acceleration.duplicated([*KEY_COLUMNS, "timestamp"])
+    counts["duplicate_time_rows"] = int(repeated.sum())
+    acceleration = acceleration[~repeated]
+
+    keys = acceleration[KEY_COLUMNS]
+    same_fix = ~(keys != keys.shift()).any(axis=1)
+    in_step = acceleration["timestamp"].diff() == SAMPLE_PERIOD
+    run_ids = (~(same_fix & in_step)).cumsum()
+
+    position = acceleration.groupby(run_ids, sort=False).cumcount()
+    run_sizes = acceleration.groupby(run_ids, sort=False)["timestamp"].transform("size")
+    short = run_sizes < BURST_LENGTH
+    fits = position < (run_sizes // BURST_LENGTH) * BURST_LENGTH
+    counts["short_run_rows"] = int(short.sum())
+    counts["partial_burst_rows"] = int((~fits & ~short).sum())
+    return acceleration[fits]
 
 
 def load_movebank_data(
     gps_file: str | Path, acceleration_file: str | Path
 ) -> MovebankData:
-    """Load complete Movebank bursts from CSV or gzipped CSV files."""
+    """Load model-ready bursts from Movebank CSV or gzipped CSV files."""
     gps_file = Path(gps_file)
     acceleration_file = Path(acceleration_file)
     gps = _read_csv(gps_file, GPS_COLUMNS)
     acceleration = _read_csv(acceleration_file, ACCELERATION_COLUMNS)
 
-    gps = gps.rename(columns={"timestamp": "start-timestamp"})
-    for frame in (gps, acceleration):
-        frame["start-timestamp"] = pd.to_datetime(
-            frame["start-timestamp"], utc=True, errors="coerce"
+    counts = Counter({"acceleration_rows": len(acceleration)})
+
+    for column in ("timestamp", "start-timestamp"):
+        acceleration[column] = pd.to_datetime(
+            acceleration[column], utc=True, errors="coerce"
         )
-    acceleration["timestamp"] = pd.to_datetime(
-        acceleration["timestamp"], utc=True, errors="coerce"
-    )
+    incomplete = acceleration[["timestamp", *KEY_COLUMNS, *TILT_COLUMNS]].isna()
+    incomplete = incomplete.any(axis=1)
+    counts["missing_value_rows"] = int(incomplete.sum())
+    acceleration = acceleration[~incomplete]
+    counts["acceleration_groups"] = acceleration.groupby(
+        KEY_COLUMNS, dropna=False, sort=False
+    ).ngroups
 
-    gps_groups = {
-        key: group for key, group in gps.groupby(KEY_COLUMNS, dropna=False, sort=False)
-    }
-    arrays = []
-    speeds = []
-    metadata = []
-    counts = {
-        "acceleration_groups": 0,
-        "accepted_bursts": 0,
-        "incomplete_bursts": 0,
-        "duplicate_sample_bursts": 0,
-        "irregular_sample_bursts": 0,
-        "missing_acceleration_bursts": 0,
-        "missing_gps_bursts": 0,
-        "duplicate_gps_bursts": 0,
-        "missing_speed_bursts": 0,
-    }
+    if len(acceleration):
+        acceleration = _cut_into_bursts(acceleration, counts)
+    samples = acceleration[TILT_COLUMNS].to_numpy(dtype=np.float32)
+    samples = samples.reshape(-1, BURST_LENGTH, len(TILT_COLUMNS))
+    counts["bursts"] = len(samples)
 
-    for key, burst in acceleration.groupby(KEY_COLUMNS, dropna=False, sort=False):
-        counts["acceleration_groups"] += 1
-        if len(burst) != BURST_LENGTH:
-            counts["incomplete_bursts"] += 1
-            continue
-        if burst[["timestamp", "tilt-x", "tilt-y", "tilt-z"]].isna().any().any():
-            counts["missing_acceleration_bursts"] += 1
-            continue
-        if burst["timestamp"].duplicated().any():
-            counts["duplicate_sample_bursts"] += 1
-            continue
+    # One row per burst: its fix, and its place among the bursts of that fix.
+    starts = acceleration.iloc[::BURST_LENGTH][KEY_COLUMNS].reset_index(drop=True)
+    starts["burst-index"] = starts.groupby(KEY_COLUMNS, sort=False).cumcount()
+    bursts = starts.merge(_gps_speeds(gps), on=KEY_COLUMNS, how="left")
 
-        burst = burst.sort_values("timestamp")
-        if not (burst["timestamp"].diff().iloc[1:] == SAMPLE_PERIOD).all():
-            counts["irregular_sample_bursts"] += 1
-            continue
+    no_gps = bursts["gps-rows"].isna()
+    conflicting = bursts["gps-rows"] > 1  # one fix, two different speeds
+    matched = ~no_gps & ~conflicting
+    no_speed = matched & bursts["ground-speed"].isna()
+    # 30 m/s and above is a broken fix, not a flying gull.
+    too_fast = matched & (bursts["ground-speed"] >= MAX_SPEED)
+    counts["missing_gps_bursts"] = int(no_gps.sum())
+    counts["conflicting_gps_bursts"] = int(conflicting.sum())
+    counts["missing_speed_bursts"] = int(no_speed.sum())
+    counts["fast_gps_bursts"] = int(too_fast.sum())
 
-        matching_gps = gps_groups.get(key)
-        if matching_gps is None:
-            counts["missing_gps_bursts"] += 1
-            continue
-        if len(matching_gps) != 1:
-            counts["duplicate_gps_bursts"] += 1
-            continue
-        speed = matching_gps.iloc[0]["ground-speed"]
-        if pd.isna(speed):
-            counts["missing_speed_bursts"] += 1
-            continue
+    keep = matched & ~no_speed & ~too_fast
+    samples = samples[keep.to_numpy()]
+    bursts = bursts[keep]
+    counts["accepted_bursts"] = len(samples)
+    counts["clipped_values"] = int((np.abs(samples) > TILT_LIMIT).sum())
+    np.clip(samples, -TILT_LIMIT, TILT_LIMIT, out=samples)
 
-        arrays.append(burst[["tilt-x", "tilt-y", "tilt-z"]].to_numpy(dtype=np.float32))
-        speeds.append(float(speed))
-        metadata.append(key)
-        counts["accepted_bursts"] += 1
-
-    acceleration_array = (
-        np.stack(arrays) if arrays else np.empty((0, 20, 3), dtype=np.float32)
-    )
-    metadata_frame = pd.DataFrame(metadata, columns=KEY_COLUMNS)
     return MovebankData(
-        acceleration=acceleration_array,
-        ground_speed=np.asarray(speeds, dtype=np.float32),
-        metadata=metadata_frame,
-        report=PreprocessingReport(**counts),
+        acceleration=samples,
+        ground_speed=bursts["ground-speed"].to_numpy(dtype=np.float32),
+        metadata=bursts[[*KEY_COLUMNS, "burst-index"]].reset_index(drop=True),
+        report=PreprocessingReport(
+            **{
+                field.name: int(counts[field.name])
+                for field in fields(PreprocessingReport)
+            }
+        ),
     )
