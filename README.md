@@ -94,7 +94,8 @@ is counted by reason, so a file that yields little data says why.
 A 5429-parameter dilated convolutional network, experiment 197 of the
 bird-behavior project, in `gulliver/models/197_best.pth` (80 KB). It reads 7
 channels: the three acceleration axes, the scaled GPS speed, and three
-magnitude channels derived from the axes.
+magnitude channels derived from the axes. How it was trained, on which data,
+and how well it does: [METHODS.md](METHODS.md).
 
 On the 2019 Texel herring gull export, 1 505 524 acceleration rows give 74 118
 classified bursts in about 11 seconds.

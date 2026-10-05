@@ -111,12 +111,22 @@ bursts, each with its own predicted class.
 
 ## Documentation
 
-`README.md` is the only document, and it is written for the third party, not
-for me: what to install, how to run it on one file and on many, what each
-output column means, and what makes a burst be skipped. Keep it short and keep
-it true — prefer a table or a bullet to a paragraph, and when adding, look for
-something to cut.
+There are two documents, both public and written for the third party, not for
+me:
 
-After a change: update the module's top docstring and `README.md` in the same
-change. A number quoted in the README goes stale silently, because nothing
-breaks when it is wrong.
+- `README.md`: what to install, how to run it on one file and on many, what
+  each output column means, and what makes a burst be skipped.
+- `METHODS.md`: the method. The classifier runs on the data listed in
+  [inbo/bird-tracking](https://github.com/inbo/bird-tracking); the data rules
+  and the model come first. Training, its labeled data and its results follow,
+  marked as background for reference, not something the user does. Data rules
+  are bullets; model and training are prose, as in the methods section of a
+  paper. No code names.
+
+Keep both short and keep them true — prefer a table or a bullet to a
+paragraph, and when adding, look for something to cut.
+
+After a change: update the module's top docstring, `README.md` and
+`METHODS.md` in the same change. The burst rules are in both documents, so
+change both. A number quoted in a document goes stale silently, because
+nothing breaks when it is wrong.
