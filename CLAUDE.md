@@ -5,8 +5,7 @@
 One job: read Movebank GPS and acceleration exports (`.csv` or `.csv.gz`),
 classify each burst with a small trained model, and write one output CSV. It is
 run by a third party on their own machine, on many files at a time. No
-training, no experiments, no cluster, no database. It started as a copy of code
-from `bird-behavior` and is now independent of it.
+training, no experiments, no cluster, no database.
 
 The model input is a burst of 20 acceleration samples at 20 Hz (50 ms apart)
 plus the ground speed of the matching GPS fix. A run of 60 clean samples is 3

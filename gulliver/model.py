@@ -1,10 +1,8 @@
 """The trained behaviour classifier.
 
-The network is `BirdModelSmallDilated`, with the weights in
-`models/197_best.pth`. They were trained in the bird-behavior project
-(experiment 197) and are not retrained here. It reads one burst as 7 channels
-by 20 samples: the three acceleration axes, the scaled GPS speed, and three
-magnitude channels. The weights only load into this exact shape, so a change
+The network is `BirdModelSmallDilated`, with the trained weights in
+`models/197_best.pth`. It reads one burst as 7 channels by 20 samples: the
+three acceleration axes, the scaled GPS speed, and three magnitude channels. The weights only load into this exact shape, so a change
 to the network fails at loading instead of going unnoticed.
 """
 
