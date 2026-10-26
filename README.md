@@ -108,6 +108,13 @@ pip install .[test]
 python -m pytest
 ```
 
+## Cite
+
+Karimi Nejadasl F, Rakhimberdiev E. GULLIVER behaviour classifier. Zenodo.
+<https://doi.org/10.5281/zenodo.23666749>
+
+This DOI (Digital Object Identifier) always leads to the newest version.
+
 ## License
 
 MIT

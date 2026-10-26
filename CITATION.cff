@@ -13,5 +13,6 @@ authors:
   - given-names: Eldar
     family-names: Rakhimberdiev
 repository-code: https://github.com/fkariminejadasl/gulliver-behavior-classifier
+doi: 10.5281/zenodo.23666749
 license: MIT
 version: 0.1.0
