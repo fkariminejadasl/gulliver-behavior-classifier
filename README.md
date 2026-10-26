@@ -6,7 +6,7 @@ Classify gull behaviour from Movebank GPS and acceleration exports. Each burst o
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install .
+pip install git+https://github.com/fkariminejadasl/gulliver-behavior-classifier
 ```
 
 The classifier is small and runs on the processor, so the CPU build of PyTorch
