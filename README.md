@@ -1,7 +1,6 @@
 # GULLIVER behaviour classifier
 
-Classify gull behaviour from Movebank GPS and acceleration exports. Give it the
-two files and it writes one CSV of behaviour classes.
+Classify gull behaviour from Movebank GPS and acceleration exports. Each burst of 20 acceleration samples, with the ground speed of its GPS fix, gets one of 9 behaviour classes from a small trained convolutional neural network.
 
 ## Install
 
