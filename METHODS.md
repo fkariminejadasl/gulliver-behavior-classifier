@@ -103,23 +103,23 @@ not the data the classifier runs on, and are not needed to use it.
   and disagreed, the label was corrected or removed.
 - A run of samples with one label is cut into bursts of 20 from its first
   labeled sample, as in rule 4.
-- The classes are those of the paper, renamed:
+- The classes are those of the paper, in lower case:
 
-| class | name in the paper | meaning (Table S1) | bursts |
-|---|---|---|---|
-| `flap` | Flap | flapping flight with regular wing beat | 643 |
-| `exflap` | Exflap | irregular, intense wing beat, at take-off or in aerial interactions | 38 |
-| `soar` | Soar | flight with no wing beat, including climbing and gliding | 537 |
-| `boat` | Boat | sitting or standing on a boat | 176 |
-| `float` | Float | floating with the currents at sea | 729 |
-| `sitstand` | Stationary | sitting or standing on land, or on a static structure at sea | 1,502 |
-| `terloco` | Walk | walking | 337 |
-| `manouvre` | Mixed | mixed flapping and gliding | 151 |
-| `pecking` | Peck | walking and pecking | 225 |
+| class | meaning (Table S1) | bursts |
+|---|---|---|
+| `flap` | flapping flight with regular wing beat | 643 |
+| `exflap` | irregular, intense wing beat, at take-off or in aerial interactions | 38 |
+| `soar` | flight with no wing beat, including climbing and gliding | 537 |
+| `boat` | sitting or standing on a boat | 176 |
+| `float` | floating with the currents at sea | 729 |
+| `stationary` | sitting or standing on land, or on a static structure at sea | 1,502 |
+| `walk` | walking | 337 |
+| `mixed` | mixed flapping and gliding | 151 |
+| `peck` | walking and pecking | 225 |
 
 - The paper's class Other (a signal that fits no class) was removed.
 - Two sets had extra classes. Float_groyne became `float` and Handling_mussel
-  became `pecking`; the others were removed.
+  became `peck`; the others were removed.
 
 ### How it was trained
 
@@ -155,14 +155,14 @@ mean of precision and recall; balanced accuracy is the mean recall per class.
 | `soar` | 54 | 0.90 |
 | `boat` | 18 | 0.94 |
 | `float` | 73 | 0.97 |
-| `sitstand` | 151 | 0.98 |
-| `terloco` | 34 | 0.89 |
-| `manouvre` | 16 | 0.79 |
-| `pecking` | 23 | 0.76 |
+| `stationary` | 151 | 0.98 |
+| `walk` | 34 | 0.89 |
+| `mixed` | 16 | 0.79 |
+| `peck` | 23 | 0.76 |
 
 Most errors are between classes that look alike in 1 s of data: 4 of 16
-`manouvre` bursts are called `soar`, 4 of 54 `soar` bursts are called `float`,
-and of 23 `pecking` bursts, 3 are called `terloco`, 2 `soar` and 2 `sitstand`.
+`mixed` bursts are called `soar`, 4 of 54 `soar` bursts are called `float`,
+and of 23 `peck` bursts, 3 are called `walk`, 2 `soar` and 2 `stationary`.
 
 ## Limitations
 
@@ -170,15 +170,15 @@ and of 23 `pecking` bursts, 3 are called `terloco`, 2 `soar` and 2 `sitstand`.
   neighbouring bursts of one fix, can be in both sets. The validation set also
   chose the epoch, and there is no separate test set. Expect lower accuracy on
   new birds than the figures above.
-- Rare classes have few validation bursts (`exflap` 4, `manouvre` 16, `boat`
-  18, `pecking` 23), so their F1 is uncertain.
+- Rare classes have few validation bursts (`exflap` 4, `mixed` 16, `boat` 18,
+  `peck` 23), so their F1 is uncertain.
 - The training data are lesser black-backed and herring gulls with UvA-BiTS
   tags at 20 Hz. Other species and tags were not tested. Bursts at other
   sampling rates are dropped by rule 3.
 - Every burst gets one of the 9 classes, even when the bird does something
   else: the class Other was removed from training.
 - 26 labeled bursts have a speed that contradicts their label, such as
-  `sitstand` at 3 m/s or more. They are in the training data of this model.
+  `stationary` at 3 m/s or more. They are in the training data of this model.
 - The 19 labeled birds are in the published LBBG_TEXEL and HG_TEXEL data, so
   results on those birds may look better than on others.
 

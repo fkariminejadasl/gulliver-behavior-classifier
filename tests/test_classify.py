@@ -12,8 +12,8 @@ def test_output_has_the_agreed_columns(tmp_path, classifier):
     assert len(output) == report.accepted_bursts == 1
     assert output["tag-id"].tolist() == [TAG]
     assert output["animal-id"].tolist() == [ANIMAL]
-    assert output["behaviour-classification"][0] in CLASS_NAMES
-    assert output["behavior-according-to"].tolist() == ["machine"]
+    assert output["behavioural-classification"][0] in CLASS_NAMES
+    assert output["study-specific-measurement"].tolist() == ["machine"]
 
 
 def test_three_bursts_of_one_fix_get_their_own_row(tmp_path, classifier):

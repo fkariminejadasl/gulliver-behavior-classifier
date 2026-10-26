@@ -5,8 +5,8 @@
 One job: read Movebank GPS and acceleration exports (`.csv` or `.csv.gz`),
 classify each burst with a small trained model, and write one output CSV. It is
 run by a third party on their own machine, on many files at a time. No
-training, no experiments, no cluster, no database — those stay in
-`bird-behavior`.
+training, no experiments, no cluster, no database. It started as a copy of code
+from `bird-behavior` and is now independent of it.
 
 The model input is a burst of 20 acceleration samples at 20 Hz (50 ms apart)
 plus the ground speed of the matching GPS fix. A run of 60 clean samples is 3
@@ -16,8 +16,9 @@ bursts, each with its own predicted class.
 
 - Answer from this repository only. The other repos in this VS Code workspace
   (`bird-behavior`, `hedge-seg`, ...) are not context unless I say so.
-  `bird-behavior` is where this code came from, so read a file there when I
-  point at one, but do not copy its structure by default. Skills too: use only
+  This repo started from `bird-behavior` but is now independent: read a file
+  there only when I point at one, and do not point to its files from this
+  repo's code or docs. Skills too: use only
   this project's, in `~/dev/gulliver-behavior-classifier/.claude/skills`,
   because the other repos have same-named ones.
 - **A third party runs this code.** Nothing in the package may assume my
@@ -25,9 +26,8 @@ bursts, each with its own predicted class.
   environment variables I happen to have set. Every input, output and model
   path is a command-line argument with a sensible default inside the repo.
 - The command-line entry point takes real arguments (`argparse` from the
-  standard library). This is the one place where this repo differs from
-  `bird-behavior`, which edits an OmegaConf config dict in place — a third
-  party cannot be asked to edit source to run a file.
+  standard library), not a config dict edited in place: a third party cannot
+  be asked to edit source to run a file.
 - Keep the dependency list small. Every extra package is one more thing the
   third party has to install. Ask before adding one; once approved, add it to
   `pyproject.toml` with a short comment saying what it is for.
@@ -53,12 +53,15 @@ bursts, each with its own predicted class.
   `conda run -n gulliver`. VS Code puts one env's `bin` at the front of `PATH`
   for every tool call, and conda does not know it is there, so `conda run` and
   `conda activate` can silently run the wrong env. A full path cannot be
-  shadowed. Note `bird-behavior` uses a different env (`bird`).
-- After each change, format, check and test:
+  shadowed. Use only this env, never another one such as `bird`, even when
+  this one lacks a package; ask instead.
+- After each change, format, check and test. The tools are not on `PATH`, so
+  call them from the env too:
 
   ```bash
-  for i in gulliver tests; do echo $i; black $i -l 88; isort $i --profile black; pyflakes $i; done
-  /home/fatemeh/miniconda3/envs/gulliver/bin/python -m pytest
+  B=/home/fatemeh/miniconda3/envs/gulliver/bin
+  for i in gulliver tests; do echo $i; $B/black $i -l 88; $B/isort $i --profile black; $B/pyflakes $i; done
+  $B/python -m pytest
   ```
 - Markdown is wrapped at 80 columns by hand. `mdformat` is not installed in
   this env; do not reach for it.
@@ -95,14 +98,14 @@ bursts, each with its own predicted class.
 
   | file | what |
   |---|---|
-  | `/home/fatemeh/Downloads/HG_TEXEL-gps-2019-subset.csv` | small, 3 birds, 3 months |
-  | `/home/fatemeh/Downloads/HG_TEXEL-acceleration-2019-subset.csv` | small, matches the above |
-  | `/home/fatemeh/Downloads/HG_TEXEL-gps-2019.csv.gz` | full year, gzipped |
-  | `/home/fatemeh/Downloads/HG_TEXEL-acceleration-2019.csv.gz` | full year, gzipped, 44 MB |
+  | `/home/fatemeh/Downloads/gulliver/data_unzip/HG_TEXEL-gps-2019-subset.csv` | small, 3 birds, January and March 2019 |
+  | `/home/fatemeh/Downloads/gulliver/data_unzip/HG_TEXEL-acceleration-2019-subset.csv` | small, matches the above |
+  | `/home/fatemeh/Downloads/gulliver/data/HG_TEXEL-gps-2019.csv.gz` | full year, gzipped |
+  | `/home/fatemeh/Downloads/gulliver/data/HG_TEXEL-acceleration-2019.csv.gz` | full year, gzipped, 44 MB |
 
-- The trained model belongs in this repo, not outside it, because it is small
-  (80 KB) and the third party needs it. It comes from `bird-behavior`
-  experiment 197, `/home/fatemeh/Downloads/bird/results/197_best.pth`.
+- The trained model is in this repo, `gulliver/models/197_best.pth`, because it
+  is small (80 KB) and the third party needs it. It was trained in
+  `bird-behavior` (experiment 197) and is not retrained here.
 - Scratch/temporary files: use `/home/fatemeh/Downloads/bird/claude`, not `/tmp`
   (which is wiped on shutdown). Clean up whatever is not worth keeping.
 - Settings/config for this project live in

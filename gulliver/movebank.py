@@ -7,9 +7,7 @@ give 3 bursts; the leftover samples are dropped. Rows and bursts that fail a
 check are skipped and counted, so a run says why data was lost. Accepted
 bursts are clipped to the range the model was trained on.
 
-The checks are the ones the model was trained behind, in bird-behavior
-`behavior/data.py::identify_and_process_groups`, `::match_gps_to_groups` and
-`scripts/data/bird_behavior_app_data.py::infer_save_app_data`.
+The checks are the ones the model was trained behind.
 """
 
 import gzip

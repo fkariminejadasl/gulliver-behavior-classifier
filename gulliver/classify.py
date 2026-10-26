@@ -1,8 +1,10 @@
 """Turn Movebank exports into one behaviour class per burst.
 
 The output is the format agreed in https://github.com/inbo/bird-tracking/issues/297,
-with one change: `timestamp` is the timestamp of the acceleration sample that
-starts the burst, not the timestamp of the GPS fix. One fix can carry up to ten
+with two changes. The last two columns were renamed later, at the request of the
+data publishers, to `behavioural-classification` and `study-specific-measurement`.
+And `timestamp` is the timestamp of the acceleration sample that starts the
+burst, not the timestamp of the GPS fix. One fix can carry up to ten
 bursts, and each burst gets its own class, so the GPS timestamp cannot tell them
 apart. The first burst of a fix starts on the fix itself, and the next ones
 follow one second later each.
@@ -20,10 +22,10 @@ OUTPUT_COLUMNS = [
     "tag-id",
     "animal-id",
     "timestamp",
-    "behaviour-classification",
-    "behavior-according-to",
+    "behavioural-classification",
+    "study-specific-measurement",
 ]
-BEHAVIOR_ACCORDING_TO = "machine"
+STUDY_SPECIFIC_MEASUREMENT = "machine"
 
 
 def _movebank_time(times: pd.Series) -> pd.Series:
@@ -45,10 +47,10 @@ def classify_files(
             "tag-id": data.metadata["tag-local-identifier"],
             "animal-id": data.metadata["individual-local-identifier"],
             "timestamp": _movebank_time(data.metadata["timestamp"]),
-            "behaviour-classification": names,
+            "behavioural-classification": names,
         }
     )
-    output["behavior-according-to"] = BEHAVIOR_ACCORDING_TO
+    output["study-specific-measurement"] = STUDY_SPECIFIC_MEASUREMENT
     return output[OUTPUT_COLUMNS], data.report
 
 

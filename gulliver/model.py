@@ -1,12 +1,11 @@
 """The trained behaviour classifier.
 
-The network is `BirdModelSmallDilated`, copied from bird-behavior
-`behavior/model.py`, with the weights of its experiment 197 in
-`models/197_best.pth`. It reads one burst as 7 channels by 20 samples: the
-three acceleration axes, the scaled GPS speed, and three magnitude channels.
-Copying the class, rather than importing it, keeps this repository standalone;
-the weights only load into this exact shape, so the two cannot drift apart
-unnoticed.
+The network is `BirdModelSmallDilated`, with the weights in
+`models/197_best.pth`. They were trained in the bird-behavior project
+(experiment 197) and are not retrained here. It reads one burst as 7 channels
+by 20 samples: the three acceleration axes, the scaled GPS speed, and three
+magnitude channels. The weights only load into this exact shape, so a change
+to the network fails at loading instead of going unnoticed.
 """
 
 from pathlib import Path
@@ -18,22 +17,23 @@ from torch import nn
 CHECKPOINT = Path(__file__).parent / "models" / "197_best.pth"
 BATCH_SIZE = 4096
 
-# The 9 classes the model was trained on, in its output order. Lowercased from
-# bird-behavior `behavior/utils.py::ind2name` restricted to its target_labels,
-# which leaves out Other. Manouvre keeps the spelling it was trained under.
+# The 9 classes the model was trained on, in its output order. The class Other
+# was left out of training. The names are those of Shamoun-Baranes et al. (2016),
+# lowercased. In training, stationary was sitstand, walk terloco, mixed manouvre,
+# peck pecking.
 CLASS_NAMES = [
     "flap",
     "exflap",
     "soar",
     "boat",
     "float",
-    "sitstand",
-    "terloco",
-    "manouvre",
-    "pecking",
+    "stationary",
+    "walk",
+    "mixed",
+    "peck",
 ]
-# The speed the training data was divided by, from bird-behavior
-# `behavior/data.py::BirdDataset`.
+# The speed the training data was divided by: the fastest speed in the labeled
+# training data, in m/s.
 GPS_SPEED_SCALE = 22.3012351755624
 
 
@@ -72,8 +72,7 @@ class BirdModelSmallDilated(nn.Module):
 def add_magnitude_features(data: np.ndarray) -> np.ndarray:
     """N x L x 4 (acceleration x, y, z, GPS speed) -> N x L x 7.
 
-    Copied from bird-behavior `behavior/data.py::add_magnitude_features`. The
-    three added channels are norms of an acceleration vector, so a rotation of
+    The three added channels are norms of an acceleration vector, so a rotation of
     the whole burst leaves them alone:
 
       mag      total acceleration whatever its direction, about 1 g when the
@@ -105,8 +104,7 @@ def load_classifier(checkpoint: str | Path = CHECKPOINT) -> nn.Module:
 def model_input(acceleration: np.ndarray, ground_speed: np.ndarray) -> np.ndarray:
     """N x 20 x 3 bursts and N speeds -> N x 7 x 20, what the network reads.
 
-    The steps and their order are those of bird-behavior
-    `behavior/data.py::BirdDataset`.
+    The steps and their order are those used in training.
     """
     speed = np.repeat(
         ground_speed[:, None, None], acceleration.shape[1], axis=1

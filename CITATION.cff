@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+type: software
+title: GULLIVER behaviour classifier
+abstract: >-
+  Classify gull behaviour from Movebank GPS and acceleration exports. Each
+  burst of 20 acceleration samples, with the ground speed of its GPS fix, gets
+  one of 9 behaviour classes from a small trained convolutional neural network.
+authors:
+  - given-names: Fatemeh
+    family-names: Karimi Nejadasl
+    orcid: https://orcid.org/0009-0000-2478-2383
+  - given-names: Eldar
+    family-names: Rakhimberdiev
+repository-code: https://github.com/fkariminejadasl/gulliver-behavior-classifier
+license: MIT
+version: 0.1.0

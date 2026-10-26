@@ -58,12 +58,12 @@ One CSV, one row per classified burst.
 | `tag-id` | from `tag-local-identifier` |
 | `animal-id` | from `individual-local-identifier` |
 | `timestamp` | the acceleration sample that starts the burst |
-| `behaviour-classification` | one of the 9 classes below |
-| `behavior-according-to` | always `machine` |
+| `behavioural-classification` | one of the 9 classes below |
+| `study-specific-measurement` | always `machine` |
 
-The classes are `flap`, `exflap`, `soar`, `boat`, `float`, `sitstand`,
-`terloco`, `manouvre`, `pecking`. They are the names the model was trained
-under; the controlled vocabulary is still to be agreed.
+The classes are `flap`, `exflap`, `soar`, `boat`, `float`, `stationary`,
+`walk`, `mixed`, `peck`: the classes of Shamoun-Baranes et al. (2016), in lower
+case. [METHODS.md](METHODS.md) says what each one means.
 
 `timestamp` is the burst's own time, not the GPS fix's. One fix can carry up to
 ten bursts and each gets its own class, so the GPS timestamp cannot keep them
