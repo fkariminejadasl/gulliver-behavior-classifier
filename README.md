@@ -39,36 +39,40 @@ If directories are provided, files with names containing `gps` and `acceleration
 
 The classifier will print how many bursts were classified and what was dropped.
 
+## Input data
 
+Input data can be provided as `csv` or gzipped `csv.gz` and are expected to have the following columns (other columns are ignored):
 
-## Input
+GPS:
 
-Two CSV files, plain or gzipped. Movebank downloads are sometimes gzipped
-twice; that is handled, so no unpacking by hand.
+- `timestamp`
+- `ground-speed`
+- `tag-local-identifier`
+- `individual-local-identifier`
 
-| file | columns used |
-|---|---|
-| GPS | `timestamp`, `ground-speed`, `tag-local-identifier`, `individual-local-identifier` |
-| acceleration | `timestamp`, `start-timestamp`, `tilt-x`, `tilt-y`, `tilt-z`, `tag-local-identifier`, `individual-local-identifier` |
+Acceleration:
 
-The acceleration `start-timestamp` joins with the GPS `timestamp`. Other columns
-are ignored.
+- `timestamp`
+- `start-timestamp`
+- `tilt-x`
+- `tilt-y`
+- `tilt-z`
+- `tag-local-identifier`
+- `individual-local-identifier`
 
-## Output
+These columns follow the [Movebank Attribute Dictionary](http://vocab.nerc.ac.uk/collection/MVB). GPS and accelleration data are joined on `tag-local-identifier`, `individual-local-identifier` and `gps.timestamp = acceleration.start-timestamp`.
 
-One CSV, one row per classified burst.
+## Output data
 
-| column | value |
-|---|---|
-| `tag-id` | from `tag-local-identifier` |
-| `animal-id` | from `individual-local-identifier` |
-| `timestamp` | the acceleration sample that starts the burst |
-| `behavioural-classification` | one of the 9 classes below |
-| `study-specific-measurement` | always `machine` |
+Output data is a CSV file with the following columns:
 
-The classes are `flap`, `exflap`, `soar`, `boat`, `float`, `stationary`,
-`walk`, `mixed`, `peck`: the classes of Shamoun-Baranes et al. (2016), in lower
-case. [METHODS.md](METHODS.md) says what each one means.
+- `tag-id`: from `tag-local-identifier`
+- `animal-id`: from `individual-local-identifier`
+- `timestamp`: the acceleration sample that starts the burst
+- `behavioural-classification`: one of the 9 classes below
+- `study-specific-measurement`: always `machine`
+
+The classes are `flap`, `exflap`, `soar`, `boat`, `float`, `stationary`, `walk`, `mixed`, `peck`: the classes of Shamoun-Baranes et al. (2016), in lowercase. See [METHODS.md](METHODS.md) for definitions.
 
 `timestamp` is the burst's own time, not the GPS fix's. One fix can carry up to
 ten bursts and each gets its own class, so the GPS timestamp cannot keep them
