@@ -119,11 +119,9 @@ python -m pytest
 
 ## Citation
 
-Cite this software as:
+Cite this software using its [DOI](https://doi.org/10.5281/zenodo.23666749), e.g.:
 
-> Karimi Nejadasl F, Rakhimberdiev E (yyyy) GULLIVER behaviour classifier. Software. <https://doi.org/10.5281/zenodo.23666749>
-
-This DOI (Digital Object Identifier) always leads to the newest version.
+> Karimi Nejadasl F, Rakhimberdiev E (2026) GULLIVER behaviour classifier (Version 0.1.0) [Computer software]. University of Amsterdam. <https://doi.org/10.5281/zenodo.23666750>
 
 ## License
 
