@@ -9,13 +9,16 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install git+https://github.com/fkariminejadasl/gulliver-behavior-classifier
 ```
 
-The classifier is small and runs on the processor, so the CPU build of PyTorch
-is enough. The trained weights ship inside the package; nothing else to
-download.
+The classifier is small and runs on the processor, so the CPU build of PyTorch is enough. The trained weights ship with the package, so nothing else needs to be downloaded.
 
-## Use
+## Usage
 
-One pair of files:
+This example uses gull GPS and acceleration data from [Shamoun-Baranes et al. 2026](https://doi.org/10.5281/zenodo.22297895):
+
+- [HG_TEXEL-gps-2019.csv.gz](https://zenodo.org/records/22297895/files/HG_TEXEL-gps-2019.csv.gz?download=1)
+- [HG_TEXEL-acceleration-2019.csv.gz](https://zenodo.org/records/22297895/files/HG_TEXEL-acceleration-2019.csv.gz?download=1)
+
+To classify, either provide the input and output **file names**:
 
 ```bash
 gulliver-classify \
@@ -24,16 +27,19 @@ gulliver-classify \
   --output HG_TEXEL-behaviour-2019.csv
 ```
 
-Every pair in a folder. Each file whose name holds `gps` is paired with the file
-of the same name holding `acceleration` instead, and the output is named after
-it with `behaviour`, so `HG_TEXEL-gps-2019.csv.gz` gives
-`HG_TEXEL-behaviour-2019.csv`:
+Or the input and output **directories**:
 
-```bash
-gulliver-classify --directory exports --output results
+```
+gulliver-classify \
+  --directory . \
+  --output output
 ```
 
-Each file prints how many bursts were classified and what was dropped.
+If directories are provided, files with names containing `gps` and `acceleration` will be paired. E.g. `file-gps-1.csv` and `file-acceleration-1.csv` -> `output/file-behaviour-1.csv`.
+
+The classifier will print how many bursts were classified and what was dropped.
+
+
 
 ## Input
 
