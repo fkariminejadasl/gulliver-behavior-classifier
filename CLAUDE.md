@@ -132,3 +132,25 @@ After a change: update the module's top docstring, `README.md` and
 `METHODS.md` in the same change. The burst rules are in both documents, so
 change both. A number quoted in a document goes stale silently, because
 nothing breaks when it is wrong.
+
+## Releases and Zenodo
+
+- Each published GitHub release is archived on Zenodo by itself, with a new
+  DOI (Digital Object Identifier) for that version. The DOI for all versions
+  stays `10.5281/zenodo.23666749`; it is in `CITATION.cff` and the README.
+- Versions so far: v0.1.0 (`10.5281/zenodo.23666750`) and v0.1.1
+  (`10.5281/zenodo.23686081`, README only).
+- To release: set `version` in `pyproject.toml` and `CITATION.cff`, commit and
+  push, then publish a release on GitHub with the tag `vX.Y.Z`. Raise the last
+  number for docs or fixes, the middle one when the output changes. Never
+  delete a tag or a release: a Zenodo record cannot be deleted.
+- From `CITATION.cff`, Zenodo reads only title, abstract, authors (with ORCID
+  and affiliation), keywords, license and message. It ignores `doi` and takes
+  the version from the tag. If a `.zenodo.json` exists, Zenodo ignores
+  `CITATION.cff` completely.
+- Details added by hand on Zenodo (funder, programming language, publisher)
+  do not carry over to a new version; they must be added again after each
+  release.
+- To check Zenodo, read `https://zenodo.org/api/records/23666749`: it returns
+  the newest version as JSON (`doi`, `metadata.version`, creators, keywords,
+  grants). Compare it with the previous version after a release.
