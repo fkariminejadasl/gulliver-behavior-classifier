@@ -10,9 +10,18 @@ authors:
   - given-names: Fatemeh
     family-names: Karimi Nejadasl
     orcid: https://orcid.org/0009-0000-2478-2383
+    affiliation: University of Amsterdam
   - given-names: Eldar
     family-names: Rakhimberdiev
-repository-code: https://github.com/fkariminejadasl/gulliver-behavior-classifier
+    orcid: https://orcid.org/0000-0001-6357-6187
+    affiliation: University of Amsterdam
+keywords:
+  - animal movement
+  - animal tracking
+  - gps tracking
+  - accelerometer
+  - behaviour
+repository-code: https://github.com/fkariminejadasl/gulliver-behaviour-classifier
 doi: 10.5281/zenodo.23666749
 license: MIT
 version: 0.1.1
