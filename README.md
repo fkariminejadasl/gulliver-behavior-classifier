@@ -1,22 +1,24 @@
 # GULLIVER behaviour classifier
 
-Classify gull behaviour from Movebank GPS and acceleration exports. Give it the
-two files and it writes one CSV of behaviour classes.
+Classify gull behaviour from Movebank GPS and acceleration exports. Each burst of 20 acceleration samples, with the ground speed of its GPS fix, gets one of 9 behaviour classes from a small trained convolutional neural network.
 
 ## Install
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install .
+pip install git+https://github.com/fkariminejadasl/gulliver-behavior-classifier
 ```
 
-The classifier is small and runs on the processor, so the CPU build of PyTorch
-is enough. The trained weights ship inside the package; nothing else to
-download.
+The classifier is small and runs on the processor, so the CPU build of PyTorch is enough. The trained weights ship with the package, so nothing else needs to be downloaded.
 
-## Use
+## Usage
 
-One pair of files:
+This example uses gull GPS and acceleration data from [Shamoun-Baranes et al. 2026](https://doi.org/10.5281/zenodo.22297895):
+
+- [HG_TEXEL-gps-2019.csv.gz](https://zenodo.org/records/22297895/files/HG_TEXEL-gps-2019.csv.gz?download=1)
+- [HG_TEXEL-acceleration-2019.csv.gz](https://zenodo.org/records/22297895/files/HG_TEXEL-acceleration-2019.csv.gz?download=1)
+
+To classify, either provide the input and output **file names**:
 
 ```bash
 gulliver-classify \
@@ -25,45 +27,52 @@ gulliver-classify \
   --output HG_TEXEL-behaviour-2019.csv
 ```
 
-Every pair in a folder. Each file whose name holds `gps` is paired with the file
-of the same name holding `acceleration` instead, and the output is named after
-it with `behaviour`, so `HG_TEXEL-gps-2019.csv.gz` gives
-`HG_TEXEL-behaviour-2019.csv`:
+Or the input and output **directories**:
 
-```bash
-gulliver-classify --directory exports --output results
+```
+gulliver-classify \
+  --directory . \
+  --output output
 ```
 
-Each file prints how many bursts were classified and what was dropped.
+If directories are provided, files with names containing `gps` and `acceleration` will be paired. E.g. `file-gps-1.csv` and `file-acceleration-1.csv` -> `output/file-behaviour-1.csv`.
 
-## Input
+The classifier will print how many bursts were classified and what was dropped.
 
-Two CSV files, plain or gzipped. Movebank downloads are sometimes gzipped
-twice; that is handled, so no unpacking by hand.
+## Input data
 
-| file | columns used |
-|---|---|
-| GPS | `timestamp`, `ground-speed`, `tag-local-identifier`, `individual-local-identifier` |
-| acceleration | `timestamp`, `start-timestamp`, `tilt-x`, `tilt-y`, `tilt-z`, `tag-local-identifier`, `individual-local-identifier` |
+Input data can be provided as `csv` or gzipped `csv.gz` and are expected to have the following columns (other columns are ignored):
 
-The acceleration `start-timestamp` joins with the GPS `timestamp`. Other columns
-are ignored.
+GPS:
 
-## Output
+- `timestamp`
+- `ground-speed`
+- `tag-local-identifier`
+- `individual-local-identifier`
 
-One CSV, one row per classified burst.
+Acceleration:
 
-| column | value |
-|---|---|
-| `tag-id` | from `tag-local-identifier` |
-| `animal-id` | from `individual-local-identifier` |
-| `timestamp` | the acceleration sample that starts the burst |
-| `behavioural-classification` | one of the 9 classes below |
-| `study-specific-measurement` | always `machine` |
+- `timestamp`
+- `start-timestamp`
+- `tilt-x`
+- `tilt-y`
+- `tilt-z`
+- `tag-local-identifier`
+- `individual-local-identifier`
 
-The classes are `flap`, `exflap`, `soar`, `boat`, `float`, `stationary`,
-`walk`, `mixed`, `peck`: the classes of Shamoun-Baranes et al. (2016), in lower
-case. [METHODS.md](METHODS.md) says what each one means.
+These columns follow the [Movebank Attribute Dictionary](http://vocab.nerc.ac.uk/collection/MVB). GPS and accelleration data are joined on `tag-local-identifier`, `individual-local-identifier` and `gps.timestamp = acceleration.start-timestamp`.
+
+## Output data
+
+Output data is a CSV file with the following columns:
+
+- `tag-id`: from `tag-local-identifier`
+- `animal-id`: from `individual-local-identifier`
+- `timestamp`: the acceleration sample that starts the burst
+- `behavioural-classification`: one of the 9 classes below
+- `study-specific-measurement`: always `machine`
+
+The classes are `flap`, `exflap`, `soar`, `boat`, `float`, `stationary`, `walk`, `mixed`, `peck`: the classes of Shamoun-Baranes et al. (2016), in lowercase. See [METHODS.md](METHODS.md) for definitions.
 
 `timestamp` is the burst's own time, not the GPS fix's. One fix can carry up to
 ten bursts and each gets its own class, so the GPS timestamp cannot keep them
@@ -108,12 +117,11 @@ pip install .[test]
 python -m pytest
 ```
 
-## Cite
+## Citation
 
-Karimi Nejadasl F, Rakhimberdiev E. GULLIVER behaviour classifier. Zenodo.
-<https://doi.org/10.5281/zenodo.23666749>
+Cite this software using its [DOI](https://doi.org/10.5281/zenodo.23666749), e.g.:
 
-This DOI (Digital Object Identifier) always leads to the newest version.
+> Karimi Nejadasl F, Rakhimberdiev E (2026) GULLIVER behaviour classifier (Version 0.1.0) [Computer software]. University of Amsterdam. <https://doi.org/10.5281/zenodo.23666750>
 
 ## License
 
