@@ -3,7 +3,7 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gulliver-behavior-classifier"
+name = "gulliver-behaviour-classifier"
 version = "0.1.1"
 description = "Classify gull behaviour from Movebank sensor data"
 readme = "README.md"

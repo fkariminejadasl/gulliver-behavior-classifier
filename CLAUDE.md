@@ -93,6 +93,13 @@ bursts, each with its own predicted class.
 
 ## Workspace
 
+- The GitHub repo is `fkariminejadasl/gulliver-behaviour-classifier`, and the
+  package name in `pyproject.toml` is the same, with British spelling. Both
+  were renamed on 2026-10-27 from `gulliver-behavior-classifier`; the old
+  GitHub address redirects. The local folder keeps the old spelling on
+  purpose: this project's Claude memory and the editable install in the
+  `gulliver` env are tied to its path. Do not rename it, and do not change
+  its spelling in paths.
 - Example third-party data, the files to test a change against:
 
   | file | what |
@@ -105,8 +112,8 @@ bursts, each with its own predicted class.
 - The trained model is in this repo, `gulliver/models/197_best.pth`, because it
   is small (80 KB) and the third party needs it. It was trained in
   `bird-behavior` (experiment 197) and is not retrained here.
-- Scratch/temporary files: use `/home/fatemeh/Downloads/bird/claude`, not `/tmp`
-  (which is wiped on shutdown). Clean up whatever is not worth keeping.
+- Scratch/temporary files: use `/home/fatemeh/Downloads/gulliver/claude`, not
+  `/tmp` (which is wiped on shutdown). Clean up whatever is not worth keeping.
 - Settings/config for this project live in
   `~/dev/gulliver-behavior-classifier/.claude` (for example `settings.json`),
   never another repo's `.claude` in this VS Code workspace.
