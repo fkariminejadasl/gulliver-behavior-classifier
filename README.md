@@ -35,9 +35,23 @@ gulliver-classify \
   --output output
 ```
 
-If directories are provided, files with names containing `gps` and `acceleration` will be paired. E.g. `file-gps-1.csv` and `file-acceleration-1.csv` -> `output/file-behaviour-1.csv`.
+If directories are provided, files with names containing `gps` and `acceleration` will be paired, e.g.:
 
-The classifier will print how many bursts were classified and what was dropped.
+```
+file-gps-1.csv + file-acceleration-1.csv -> output/file-behaviour-1.csv
+```
+
+The classifier will print how many bursts were classified and what was dropped, e.g.:
+
+```
+  74118 bursts classified, from 1505524 acceleration rows
+  dropped 928 rows with a missing value
+  dropped 18054 rows in runs shorter than a burst
+  dropped 2 rows left over after the last whole burst
+  dropped 186 bursts with no GPS speed
+  dropped 23 bursts with an impossible GPS speed
+  clipped 3330 tilt values
+```
 
 ## Input data
 
