@@ -1,5 +1,7 @@
 # GULLIVER behaviour classifier
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23666749.svg)](https://doi.org/10.5281/zenodo.23666749)
+
 Classify gull behaviour from Movebank GPS and acceleration exports. Each burst of 20 acceleration samples, with the ground speed of its GPS fix, gets one of 9 behaviour classes from a small trained convolutional neural network.
 
 ## Install
