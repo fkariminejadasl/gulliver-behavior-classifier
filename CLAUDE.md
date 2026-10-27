@@ -67,7 +67,8 @@ bursts, each with its own predicted class.
 
 ## Commits
 
-- Never run `git commit`. Prepare the change and the message; I commit.
+- Never run `git commit` or `git push`. Prepare the change and the message;
+  I commit and push.
 - Commit messages: never mention Claude or Claude Code (no attribution, no
   Co-Authored-By line, no tool names).
 - A commit message must cover everything still uncommitted (`git status`), not
@@ -90,6 +91,14 @@ bursts, each with its own predicted class.
   Write `model=BirdModelSmallDilated`, not `` `model="..."` ``. Say: the 0.05
   threshold, without quotes. Blank lines between paragraphs are fine inside the
   quotes, so a multi-paragraph message still works with one `-m`.
+
+## Pull requests
+
+- `gh` (the GitHub command-line tool) is not installed. Fetch a pull request
+  with `git fetch origin pull/<N>/head` and compare `origin/main...FETCH_HEAD`.
+- Review for real mistakes only, not style: links that break, commands that
+  fail, numbers that do not match a run on the example files, and claims that
+  do not match the code. If it is fine, say so; I merge it on GitHub.
 
 ## Workspace
 
