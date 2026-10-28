@@ -88,8 +88,10 @@ not the data the classifier runs on, and are not needed to use it.
 
 - 4,338 labeled bursts from 1,822 GPS fixes of 19 gulls, May 2012 to May 2016:
   - 14 lesser black-backed gulls (*Larus fuscus*) of the LBBG_TEXEL study,
-    3,503 bursts;
-  - 5 herring gulls (*Larus argentatus*) of the HG_TEXEL study, 835 bursts.
+    3,503 bursts, tags 533, 534, 537, 541, 606, 608, 754, 757, 781, 782, 798,
+    805, 806 and 871;
+  - 5 herring gulls (*Larus argentatus*) of the HG_TEXEL study, 835 bursts,
+    tags 1600, 6011, 6016, 6080 and 6210.
 - All tags are UvA-BiTS, with acceleration at 20 Hz.
 - The data came from the UvA-BiTS database, not from the published files, and
   passed the same rules (Data, rules 1-7). There a sample was known by its
