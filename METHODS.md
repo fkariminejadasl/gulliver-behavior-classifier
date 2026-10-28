@@ -179,8 +179,13 @@ and of 23 `peck` bursts, 3 are called `walk`, 2 `soar` and 2 `stationary`.
   sampling rates are dropped by rule 3.
 - Every burst gets one of the 9 classes, even when the bird does something
   else: the class Other was removed from training.
-- 26 labeled bursts have a speed that contradicts their label, such as
-  `stationary` at 3 m/s or more. They are in the training data of this model.
+- 26 labeled bursts have a speed that does not fit their label, such as
+  `stationary` at 3 m/s or more. They were kept on purpose:
+  - GPS speed is sometimes wrong in real data too. 16 of the 26 bursts are one
+    tag on one day, which looks like a GPS fault, not 16 labeling mistakes.
+  - Models trained without them were about as accurate. They made fewer
+    predictions that do not fit the speed, but that test uses the same speed
+    rule that found the 26 bursts, so it cannot decide.
 - The 19 labeled birds are in the published LBBG_TEXEL and HG_TEXEL data, so
   results on those birds may look better than on others.
 
